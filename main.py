@@ -3,6 +3,13 @@ import random
 import time
 from tkinter import messagebox
 
+# Use the winsound module only if on Windows
+try:
+    import winsound
+    SOUND_AVAILABLE = True
+except ImportError:
+    SOUND_AVAILABLE = False
+
 class MemoryGame:
     def __init__(self, root):
         self.root = root
@@ -16,7 +23,7 @@ class MemoryGame:
         self.moves = 0
         self.start_time = None
         
-        # Create a frame for the labels
+        # Create a frame for the labels and reset button
         self.top_frame = tk.Frame(self.root)
         self.top_frame.grid(row=0, column=0, columnspan=4, pady=10)
 
@@ -26,9 +33,13 @@ class MemoryGame:
         self.moves_label = tk.Label(self.top_frame, text="Moves: 0", font=("Helvetica", 14))
         self.moves_label.grid(row=0, column=1, padx=10)
 
+        # Reset Button
+        self.reset_button = tk.Button(self.top_frame, text="Reset Game", font=("Helvetica", 14), command=self.setup_board)
+        self.reset_button.grid(row=0, column=2, padx=10)
+
         self.setup_board(4, 4)  # Example: 4x4 grid
 
-    def setup_board(self, rows, cols):
+    def setup_board(self, rows=4, cols=4):
         self.reset_board()
         self.buttons = []
         self.card_values = []
@@ -68,6 +79,7 @@ class MemoryGame:
         if not btn["text"]:
             btn["text"] = str(self.card_values[row][col])
             btn.config(state="disabled")
+            self.play_sound("flip")
             if not self.first:
                 self.first = (row, col)
             else:
@@ -79,11 +91,13 @@ class MemoryGame:
         row2, col2 = self.second
         if self.card_values[row1][col1] == self.card_values[row2][col2]:
             self.matches += 1
+            self.play_sound("match")
         else:
             self.buttons[row1][col1]["text"] = ""
             self.buttons[row2][col2]["text"] = ""
             self.buttons[row1][col1].config(state="normal")
             self.buttons[row2][col2].config(state="normal")
+            self.play_sound("nomatch")
         self.first = None
         self.second = None
         self.moves += 1
@@ -94,11 +108,23 @@ class MemoryGame:
     def end_game(self):
         elapsed_time = int(time.time() - self.start_time)
         messagebox.showinfo("Congratulations!", f"You've matched all the cards in {self.moves} moves and {elapsed_time} seconds!")
+        self.play_sound("win")
 
     def update_timer(self):
         elapsed_time = int(time.time() - self.start_time)
         self.timer_label.config(text=f"Time: {elapsed_time}")
         self.root.after(1000, self.update_timer)
+
+    def play_sound(self, sound_type):
+        if SOUND_AVAILABLE:
+            if sound_type == "flip":
+                winsound.PlaySound("flip.wav", winsound.SND_ASYNC)
+            elif sound_type == "match":
+                winsound.PlaySound("match.wav", winsound.SND_ASYNC)
+            elif sound_type == "nomatch":
+                winsound.PlaySound("nomatch.wav", winsound.SND_ASYNC)
+            elif sound_type == "win":
+                winsound.PlaySound("win.wav", winsound.SND_ASYNC)
 
 if __name__ == "__main__":
     root = tk.Tk()
