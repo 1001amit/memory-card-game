@@ -1,5 +1,6 @@
 import tkinter as tk
 import random
+from tkinter import messagebox
 
 class MemoryGame:
     def __init__(self, root):
@@ -8,6 +9,10 @@ class MemoryGame:
         
         self.buttons = []
         self.card_values = []
+        self.first = None
+        self.second = None
+        self.matches = 0
+        self.moves = 0
         
         self.setup_board(4, 4)  # Example: 4x4 grid
 
@@ -34,10 +39,36 @@ class MemoryGame:
             widget.destroy()
 
     def on_button_click(self, row, col):
+        if self.first and self.second:
+            return
         btn = self.buttons[row][col]
-        btn["text"] = str(self.card_values[row][col])
+        if not btn["text"]:
+            btn["text"] = str(self.card_values[row][col])
+            if not self.first:
+                self.first = (row, col)
+            else:
+                self.second = (row, col)
+                self.root.after(500, self.check_match)
+
+    def check_match(self):
+        row1, col1 = self.first
+        row2, col2 = self.second
+        if self.card_values[row1][col1] == self.card_values[row2][col2]:
+            self.matches += 1
+        else:
+            self.buttons[row1][col1]["text"] = ""
+            self.buttons[row2][col2]["text"] = ""
+        self.first = None
+        self.second = None
+        self.moves += 1
+        if self.matches == (len(self.card_values) * len(self.card_values[0])) // 2:
+            self.end_game()
+
+    def end_game(self):
+        messagebox.showinfo("Congratulations!", f"You've matched all the cards in {self.moves} moves!")
 
 if __name__ == "__main__":
     root = tk.Tk()
     game = MemoryGame(root)
     root.mainloop()
+
