@@ -3,7 +3,6 @@ import random
 import time
 from tkinter import messagebox
 
-# Use the winsound module only if on Windows
 try:
     import winsound
     SOUND_AVAILABLE = True
@@ -14,30 +13,41 @@ class MemoryGame:
     def __init__(self, root):
         self.root = root
         self.root.title("Memory Card Game")
+        self.root.configure(bg="black")
         
         self.buttons = []
         self.card_values = []
+        self.card_colors = {
+            1: "red",
+            2: "blue",
+            3: "green",
+            4: "yellow",
+            5: "orange",
+            6: "purple",
+            7: "pink",
+            8: "cyan"
+        }
         self.first = None
         self.second = None
         self.matches = 0
         self.moves = 0
         self.start_time = None
-        
-        # Create a frame for the labels and reset button
-        self.top_frame = tk.Frame(self.root)
-        self.top_frame.grid(row=0, column=0, columnspan=4, pady=10)
 
-        # Timer and Moves Labels
-        self.timer_label = tk.Label(self.top_frame, text="Time: 0", font=("Helvetica", 14))
-        self.timer_label.grid(row=0, column=0, padx=10)
-        self.moves_label = tk.Label(self.top_frame, text="Moves: 0", font=("Helvetica", 14))
-        self.moves_label.grid(row=0, column=1, padx=10)
+        self.top_frame = tk.Frame(self.root, bg="black")
+        self.top_frame.pack(pady=10)
 
-        # Reset Button
+        self.timer_label = tk.Label(self.top_frame, text="Time: 0", font=("Helvetica", 14), bg="black", fg="white")
+        self.timer_label.pack(side=tk.LEFT, padx=10)
+        self.moves_label = tk.Label(self.top_frame, text="Moves: 0", font=("Helvetica", 14), bg="black", fg="white")
+        self.moves_label.pack(side=tk.LEFT, padx=10)
+
         self.reset_button = tk.Button(self.top_frame, text="Reset Game", font=("Helvetica", 14), command=self.setup_board)
-        self.reset_button.grid(row=0, column=2, padx=10)
+        self.reset_button.pack(side=tk.LEFT, padx=10)
 
-        self.setup_board(4, 4)  # Example: 4x4 grid
+        self.board_frame = tk.Frame(self.root, bg="black")
+        self.board_frame.pack()
+
+        self.setup_board(4, 4)
 
     def setup_board(self, rows=4, cols=4):
         self.reset_board()
@@ -47,7 +57,7 @@ class MemoryGame:
         self.second = None
         self.matches = 0
         self.moves = 0
-        self.start_time = time.time()  # Start the timer
+        self.start_time = time.time()
         
         cards = list(range(1, (rows * cols) // 2 + 1)) * 2
         random.shuffle(cards)
@@ -57,27 +67,26 @@ class MemoryGame:
         for row in range(rows):
             button_row = []
             for col in range(cols):
-                btn = tk.Button(self.root, width=10, height=5, font=("Helvetica", 20), 
-                                command=lambda r=row, c=col: self.on_button_click(r, c))
-                btn.grid(row=row+1, column=col, padx=5, pady=5)  # Adjust row index to avoid overlap with top_frame
+                btn = tk.Button(self.board_frame, width=10, height=5, font=("Helvetica", 20), 
+                                command=lambda r=row, c=col: self.on_button_click(r, c), bg="gray")
+                btn.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
+                self.board_frame.grid_rowconfigure(row, weight=1)
+                self.board_frame.grid_columnconfigure(col, weight=1)
                 button_row.append(btn)
             self.buttons.append(button_row)
 
         self.update_timer()
 
     def reset_board(self):
-        for widget in self.root.winfo_children():
-            if isinstance(widget, tk.Button):
-                widget.destroy()
-        # No need to repack timer and moves labels, as they are in top_frame
-        self.top_frame.grid(row=0, column=0, columnspan=4, pady=10)
+        for widget in self.board_frame.winfo_children():
+            widget.destroy()
 
     def on_button_click(self, row, col):
         if self.first and self.second:
             return
         btn = self.buttons[row][col]
-        if not btn["text"]:
-            btn["text"] = str(self.card_values[row][col])
+        if btn["bg"] == "gray":
+            btn["bg"] = self.card_colors[self.card_values[row][col]]
             btn.config(state="disabled")
             self.play_sound("flip")
             if not self.first:
@@ -93,8 +102,8 @@ class MemoryGame:
             self.matches += 1
             self.play_sound("match")
         else:
-            self.buttons[row1][col1]["text"] = ""
-            self.buttons[row2][col2]["text"] = ""
+            self.buttons[row1][col1]["bg"] = "gray"
+            self.buttons[row2][col2]["bg"] = "gray"
             self.buttons[row1][col1].config(state="normal")
             self.buttons[row2][col2].config(state="normal")
             self.play_sound("nomatch")
@@ -128,5 +137,6 @@ class MemoryGame:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.geometry("600x600")
     game = MemoryGame(root)
     root.mainloop()
